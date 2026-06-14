@@ -7,3 +7,6 @@ pyrender>=0.1.45,<0.2
 Pillow>=10,<13
 numpy>=1.24,<3
 lxml>=4.9,<7
+manifold3d>=2.4,<4
+rtree>=1.0,<2
+flask>=3.0,<4

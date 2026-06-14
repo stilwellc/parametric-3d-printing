@@ -47,6 +47,46 @@ $PSLICER --version   # confirm it's found
 # If not installed, skip slicer verification and note "slicer not available" in delivery.
 ```
 
+### Live Design UI
+
+A companion browser UI shows the model building in real time. Start it once per session before Phase 1:
+
+```bash
+python3 ui_server.py   # opens http://localhost:7384 automatically
+```
+
+The UI shows: live 3D model (Three.js STL viewer), multi-view preview images, phase progress, parameter table, and slicer report. It updates automatically whenever you export a new STL or PNG.
+
+**Write `ui_state.json` at every phase transition** so the UI stays in sync. Use this schema:
+
+```python
+import json, pathlib
+
+def update_ui(phase_id, phase_label, message, parameters=None,
+              object_name="", material="", printer="", slicer_report=None):
+    state = {
+        "phase":         phase_label,
+        "phase_id":      phase_id,       # see phase IDs below
+        "object":        object_name,
+        "material":      material,
+        "printer":       printer,
+        "message":       message,
+        "parameters":    parameters or {},
+        "slicer_report": slicer_report,  # dict or None
+    }
+    pathlib.Path("ui_state.json").write_text(json.dumps(state, indent=2))
+```
+
+**Phase IDs** (use exactly these strings):
+`requirements` · `search` · `dimensions` · `brief` · `phase1` · `phase2` · `structural` · `phase3` · `slicer` · `delivered`
+
+**Slicer report dict** (fill from gcode parse):
+```python
+slicer_report = {"time": "2h 15m", "filament_g": "18", "support_pct": 0.0, "layers": 112}
+```
+
+If the user hasn't started `ui_server.py`, skip the `update_ui` calls silently — they are optional and must never block the design workflow.
+
 ---
 
 ## Design Constants Reference
@@ -247,6 +287,8 @@ PrusaSlicer/BambuStudio default: aligned seam at the sharpest concave corner (ve
 
 Follow these steps in order. Do not skip phases or combine them unless the model is very simple (a flat bracket with two holes). Show the user progress at each phase and wait for feedback before continuing.
 
+**UI:** Start `python3 ui_server.py` now if not already running. Call `update_ui()` at every step below.
+
 ### Step 1: Requirements Gathering
 
 Walk through these topics conversationally. Ask the most important ones first, follow up based on answers. Use reasonable defaults when the user doesn't specify.
@@ -266,6 +308,10 @@ Walk through these topics conversationally. Ask the most important ones first, f
 **Aesthetic preferences** — Rounded vs sharp edges, minimal vs industrial. Ask briefly. Most users care more about function.
 
 Start with what + dimensions, then ask about mounting and material. Only ask about aesthetics if the user seems to care or if it affects structural choices.
+
+```python
+update_ui("requirements", "Requirements", "Gathering requirements...", object_name=OBJECT, material=MATERIAL, printer=PRINTER)
+```
 
 ### Step 2: Search Model Repositories
 
@@ -321,6 +367,10 @@ Then wait for the user's decision:
 
 Even then, a 30-second search costs nothing — if you skip it, say why.
 
+```python
+update_ui("search", "Repo Search", "Searching MakerWorld, Printables, Thingiverse...", object_name=OBJECT, material=MATERIAL, printer=PRINTER)
+```
+
 ### Step 3: Research Real-World Dimensions
 
 When designing objects that interface with real products (phones, chargers, PCBs, connectors), **use web search to find accurate dimensions before writing any geometry code**. Don't guess. Even 1–2mm off can make a part unusable.
@@ -340,6 +390,10 @@ puck_thickness = 5.6    # mm
 ```
 
 When in doubt, add 0.3–0.5mm clearance to external dimensions.
+
+```python
+update_ui("dimensions", "Dimensions", "Researching real-world dimensions...", object_name=OBJECT, material=MATERIAL, printer=PRINTER)
+```
 
 ### Step 4: Design Brief
 
@@ -361,6 +415,10 @@ Then ask: "Here's my design plan — does this match what you're after before I 
 
 **Wait for confirmation before proceeding.**
 
+```python
+update_ui("brief", "Design Brief", "Waiting for brief confirmation...", object_name=OBJECT, material=MATERIAL, printer=PRINTER, parameters=PARAMS)
+```
+
 ### Step 5: Phase 1 — Base Shape
 
 Build the basic outer form: overall dimensions, shell/walls, bottom plate. No cutouts, no fillets, no details yet. All parameters defined at the top of the script using the Script Template below.
@@ -373,10 +431,12 @@ Build the basic outer form: overall dimensions, shell/walls, bottom plate. No cu
 
 **Steps:**
 1. Write the script with parameters and basic geometry
-2. Export STL and render preview: `python3 run_cadquery_model.py model.py --preview --strict`
-3. Self-review: Does the shape and size look right? Is the bottom flat for printing?
-4. **Show the preview to the user:** "Here's the basic shape. Does this look right before I add details?" Include key dimensions.
-5. Wait for feedback. Iterate here before moving on.
+2. `update_ui("phase1", "Phase 1 — Base Shape", "Building base shell...", parameters=PARAMS, ...)`
+3. Export STL and render preview: `python3 run_cadquery_model.py model.py --preview --strict`
+4. Self-review: Does the shape and size look right? Is the bottom flat for printing?
+5. `update_ui("phase1", "Phase 1 — Base Shape", "Base shape complete — waiting for feedback", parameters=PARAMS, ...)`
+6. **Show the preview to the user:** "Here's the basic shape. Does this look right before I add details?" Include key dimensions.
+7. Wait for feedback. Iterate here before moving on.
 
 ### Step 6: Phase 2 — Features
 
@@ -390,15 +450,21 @@ Look up all fit values from the Design Constants Reference:
 - Seam placement per the Seam Placement Strategy
 
 **Steps:**
-1. Add features to the script
-2. Export STL and render preview
-3. Self-review: Are all features visible? Do booleans look clean? Are holes in the right positions?
-4. **Show the preview to the user:** "I've added [list features]. Anything to change before I finalize?"
-5. Wait for feedback. Iterate if needed.
+1. `update_ui("phase2", "Phase 2 — Features", "Adding functional features...", parameters=PARAMS, ...)`
+2. Add features to the script
+3. Export STL and render preview
+4. Self-review: Are all features visible? Do booleans look clean? Are holes in the right positions?
+5. `update_ui("phase2", "Phase 2 — Features", "Features complete — waiting for feedback", parameters=PARAMS, ...)`
+6. **Show the preview to the user:** "I've added [list features]. Anything to change before I finalize?"
+7. Wait for feedback. Iterate if needed.
 
 ### Step 7: Structural Reinforcement Pass
 
 After Phase 2 features are done, before Phase 3 finishing, run a structural analysis and reason through the Structural Rules table.
+
+```python
+update_ui("structural", "Structural Check", "Running structural reinforcement analysis...", parameters=PARAMS, ...)
+```
 
 ```python
 import trimesh, numpy as np
@@ -422,6 +488,10 @@ Then reason through the Structural Rules:
 
 Fix issues, re-export, re-run the check. Only proceed to Phase 3 when the analysis is clean.
 
+```python
+update_ui("phase3", "Phase 3 — Finish", "Structural check passed — applying final finish...", parameters=PARAMS, ...)
+```
+
 ### Step 8: Phase 3 — Final Delivery
 
 Apply finishing touches, run slicer verification, and deliver.
@@ -430,6 +500,10 @@ Apply finishing touches, run slicer verification, and deliver.
 2. Export final STL and render preview
 3. Run the full self-review checklist (see Output Checklist at the bottom)
 4. Fix any issues found, re-export if needed
+
+```python
+update_ui("slicer", "Slicer Verification", "Slicing model headlessly...", parameters=PARAMS, ...)
+```
 
 **Run Slicer Verification:**
 
@@ -508,6 +582,14 @@ print(f"Layer count:    {layers}")
 | Layer count | < 10 | Model may be wrong scale or too flat — verify |
 
 After fixing anything flagged, re-slice and re-parse. Only deliver once the numbers are clean.
+
+```python
+# Update UI with slicer results — the UI will show these in the Slicer Report panel
+update_ui("delivered", "Delivered", "Print-ready STL delivered.",
+          object_name=OBJECT, material=MATERIAL, printer=PRINTER, parameters=PARAMS,
+          slicer_report={"time": time_str, "filament_g": filament_g,
+                         "support_pct": support_pct, "layers": layers})
+```
 
 **Deliver the Complete Package:**
 
