@@ -478,14 +478,77 @@ Remaining overhangs after fill: none. No slicer supports needed.
 
 ---
 
+## Model Repository Search
+
+Before writing any CadQuery code, search the major model repositories. A high-quality existing model saves the user time and may be better-tested than a fresh design. This step runs **after** requirements gathering (so you know what to search for) but **before** any design work.
+
+### Sites to search
+
+| Site | URL | Notes |
+|------|-----|-------|
+| MakerWorld | makerworld.com | Bambu Lab's community — highest quality filter, good parametric models |
+| Printables | printables.com | Prusa's community — large library, strong tagging |
+| Thingiverse | thingiverse.com | Largest archive — older models, variable quality |
+| Cults3D | cults3d.com | Curated, paid and free — good for functional parts |
+| MyMiniFactory | myminifactory.com | Community + creator marketplace |
+
+Search all five. Use `WebSearch` with targeted queries like:
+```
+site:makerworld.com <object name> <key constraint>
+site:printables.com <object name> parametric
+<object name> 3d print filetype:stl
+```
+
+### What to look for
+
+A result is worth presenting to the user if it meets **all** of these:
+- Matches the core function the user described
+- Is compatible with their printer/material (check the listing's print settings if shown)
+- Has a recent upload or a proven remix count (indicates it actually prints)
+- Fits the critical dimensions, OR is parametric so dimensions can be adjusted
+
+### How to report findings
+
+Present results **before** starting design. Be specific — include the model name, site, URL, and what makes it relevant or insufficient:
+
+```
+Before designing, I searched the major repositories. Here's what I found:
+
+✅ Strong match — MakerWorld: "Parametric Wall Hook" by user X
+   Fits your ~50mm mounting slot, PETG-compatible, 4.8★ with 200+ makes.
+   URL: [link]
+   → Worth downloading first. Want me to use this, modify it, or design a custom version?
+
+⚠️ Partial match — Printables: "Cable Tray v2"
+   Right function but fixed 80mm width; you need 120mm. Not parametric.
+
+❌ Nothing suitable on Thingiverse or Cults3D for this combination.
+```
+
+Then wait for the user's decision:
+- **"Use it"** → provide the download link, done
+- **"Modify it"** → switch to **STL Reference Mode** (above) with the downloaded file
+- **"Build custom"** → proceed with the normal design workflow
+
+### When to skip the search
+
+- User explicitly says "build me a custom" or "I want it parametric from scratch"
+- User already has a reference STL they're working from
+- The object is highly specific to their exact hardware (custom PCB, one-off enclosure dimensions) where a generic match is unlikely
+
+Even then, a 30-second search costs nothing — if you skip it, say why.
+
+---
+
 ## Core Workflow
 
 1. **Gather requirements** (see Requirements Gathering below)
-2. **Research dimensions** of any real-world products involved (see above)
-3. **Phase 1, Base shape**: Build outer shell, preview, get user feedback
-4. **Phase 2, Features**: Add functional details, preview, get user feedback
-5. **Phase 3, Final delivery**: Fillets, cleanup, final preview + STL + print recommendations
-6. **Offer parameter tweaks** after delivery
+2. **Search model repositories** (see Model Repository Search below) — find existing designs before building from scratch
+3. **Research dimensions** of any real-world products involved (see above)
+4. **Phase 1, Base shape**: Build outer shell, preview, get user feedback
+5. **Phase 2, Features**: Add functional details, preview, get user feedback
+6. **Phase 3, Final delivery**: Fillets, cleanup, final preview + STL + print recommendations
+7. **Offer parameter tweaks** after delivery
 
 This is a **collaborative, show-as-you-go** process. Do NOT disappear and come back with a finished model. Show the user your progress at each phase and incorporate their feedback before moving on.
 
