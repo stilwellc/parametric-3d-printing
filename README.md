@@ -93,7 +93,7 @@ tm = fabric_solid(profile_fn, height=60.0, layer_h=0.2,
                   zigzag_layers=3, straight_layers=2)
 ```
 
-The geometry is staircase-quantized to print layers, so the slicer layer height must exactly match `layer_h`. Print with 2 perimeters, 0% infill, no top layers, vase mode off, full cooling. Full rules live in the "Printed Fabric Walls" section of `SKILL.md`; `zigzag_bowl.py` is a complete example (fabric wall + diamond-perforated floor + stencil text cut):
+The geometry is staircase-quantized to print layers, so the slicer layer height must exactly match `layer_h`. Print with 2 perimeters, 0% infill, no top layers, vase mode off, full cooling. Full rules live in the "Printed Fabric Walls" section of `SKILL.md`. Pair it with the `floor_cuts.py` helpers — crisscross diamond cutout rings and stencil-bridged through-cut text, with a hard guard against loose islands that would detach on the print bed — to perforate the solid floor to match:
 
 <p align="center">
   <img src="docs/zigzag_fabric_bowl.png" alt="Zigzag fabric bowl: perforated floor with stencil text, interior, and hero view" width="900">
@@ -125,7 +125,7 @@ More on [MakerWorld](https://makerworld.com/en/@sercanto).
 | `run_cadquery_model.py` | Runs a CadQuery script, renders preview, emits JSON for Claude's self-correct loop |
 | `preview.py` | Headless STL → multi-view PNG renderer; `--strict` fails on non-watertight meshes |
 | `zigzag_fabric.py` | Reusable printed-fabric wall generator |
-| `zigzag_bowl.py` | Fabric-technique example: 200mm bowl, perforated floor, stencil text |
+| `floor_cuts.py` | Floor through-cut helpers: diamond rings + stencil-bridged text, loose-island guard |
 | `mesh_io.py` | STL loading with validation (no pyrender dependency) |
 | `stl_to_3mf.py` | STL → 3MF converter for Bambu Studio / PrusaSlicer |
 | `design-review.md` | Visual inspection checklist and printability analysis helpers |

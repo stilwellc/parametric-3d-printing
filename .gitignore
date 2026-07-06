@@ -20,3 +20,4 @@ combine_with_backplate.py
 # Session runtime artifacts
 ui_state.json
 zigzag_bowl_*.png
+zigzag_bowl.py

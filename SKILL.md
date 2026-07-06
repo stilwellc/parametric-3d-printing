@@ -1200,8 +1200,18 @@ tm.export("fabric_part.stl")
 - `layer_h` must exactly match the slicer layer height, or the zigzag/straight alternation smears across layers. State this in the delivery message.
 - Vase/spiral mode OFF (contours alternate per layer), 2 perimeters, 0% infill, 0 top layers, fan 100%, outer wall ≤60mm/s, no supports.
 - Keep the unsupported half-period (`pi * diameter / zigzags_around / 2`) comfortably under the material's bridge limit — ~3-4mm is safe for PLA.
-- Boolean floor cutouts (diamond rings, stencil text) go through the solid floor with manifold3d. Any through-cut word/logo needs stencil bridges for enclosed counters, and after cutting always verify `len(tm.split(only_watertight=False)) == 1` — extra bodies are loose islands that fall out of the print.
-- Reference example: `zigzag_bowl.py` (200mm catch-all bowl: fabric wall + diamond-perforated floor + stencil text). Tests: `tests/test_zigzag_fabric.py`.
+- For decorative through-cuts in the solid floor, use the `floor_cuts.py` helpers — never hand-roll them:
+
+```python
+from floor_cuts import diamond_cutters, text_cutters, cut_floor
+
+cutters = diamond_cutters([(20.0, 15), (27.0, 20)], diag=5.0, depth=floor_t + 2)
+cutters += text_cutters("empty", width=27.0, bridge_w=0.8, depth=floor_t + 2)
+tm = cut_floor(tm, cutters)   # raises if any piece would fall out of the print
+```
+
+  `text_cutters` adds stencil bridges through enclosed counters (o, e, p...) automatically, and `cut_floor` refuses to return geometry with loose islands — a through-cut word/logo without bridges detaches on the bed.
+- Tests: `tests/test_zigzag_fabric.py`, `tests/test_floor_cuts.py`.
 
 ### Common Pitfalls
 
