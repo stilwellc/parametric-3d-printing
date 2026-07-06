@@ -39,6 +39,21 @@ def test_fabric_solid_dimensions():
     assert abs(tm.bounds[0][2]) < 1e-9
 
 
+def test_band_quantize_shrinks_mesh_and_stays_watertight():
+    # a sloped profile defeats ring dedup unless band_quantize is on
+    profile = lambda z: 30.0 + 0.2 * z
+    kwargs = dict(shell_t=1.0, floor_t=1.6, solid_base_z=2.4, layer_h=0.1,
+                  zigzags_around=24, zigzag_depth=1.5,
+                  zigzag_layers=3, straight_layers=2, samples_per_zigzag=4)
+    dense = fabric_solid(profile, 12.0, **kwargs)
+    lean = fabric_solid(profile, 12.0, band_quantize=True, **kwargs)
+    assert lean.is_watertight
+    assert len(lean.split(only_watertight=False)) == 1
+    assert len(lean.faces) < len(dense.faces) / 2
+    # same envelope
+    assert np.allclose(lean.extents, dense.extents, atol=0.2)
+
+
 def test_solid_base_band_stays_smooth():
     tm = small_fabric()
     # below solid_base_z no vertex may swing past the profile radius

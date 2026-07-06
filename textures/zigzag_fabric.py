@@ -37,7 +37,8 @@ def fabric_solid(profile_r, height, *,
                  zigzag_depth=2.0,
                  zigzag_layers=3,
                  straight_layers=2,
-                 samples_per_zigzag=6):
+                 samples_per_zigzag=6,
+                 band_quantize=False):
     """Closed, watertight fabric-walled solid of revolution.
 
     profile_r      callable z (scalar mm) -> outer wall radius (mm);
@@ -53,6 +54,14 @@ def fabric_solid(profile_r, height, *,
     zigzag_depth   outward swing of zigzag layers, mm (opening size).
     zigzag_layers  print layers per zigzag band.
     straight_layers print layers per straight band.
+    band_quantize  sample the silhouette once per band instead of per
+                   layer in the pattern region. Identical consecutive
+                   contours then collapse into single staircase steps,
+                   shrinking the mesh dramatically — essential at fine
+                   layer heights (0.1mm and below), where per-layer
+                   rings can exceed 100MB of STL. Adds at most
+                   band_height * profile slope (<~0.3mm) of radial
+                   stepping, invisible inside the fabric texture.
 
     Returns a trimesh.Trimesh. Callers should verify `is_watertight`
     and, after any boolean floor cuts, `len(tm.split()) == 1`.
@@ -65,10 +74,20 @@ def fabric_solid(profile_r, height, *,
     def layer_contour(k):
         """Outer-wall radius array (n_theta,) for print layer k."""
         z_mid = (k + 0.5) * layer_h
-        base_r = float(profile_r(min(z_mid, height)))
-        if z_mid < solid_base_z:
-            return np.full(n_theta, base_r)
         pk = k - int(solid_base_z / layer_h)   # layers since pattern start
+        if band_quantize and z_mid >= solid_base_z:
+            # sample the profile at the band's middle layer so every
+            # layer in the band shares one contour (rings then dedup)
+            in_cycle = pk % cycle
+            if in_cycle < zigzag_layers:
+                band_mid = pk - in_cycle + (zigzag_layers - 1) / 2
+            else:
+                band_mid = (pk - in_cycle + zigzag_layers
+                            + (straight_layers - 1) / 2)
+            z_mid = (band_mid + int(solid_base_z / layer_h) + 0.5) * layer_h
+        base_r = float(profile_r(min(z_mid, height)))
+        if (k + 0.5) * layer_h < solid_base_z:
+            return np.full(n_theta, base_r)
         if pk % cycle >= zigzag_layers:        # straight band
             return np.full(n_theta, base_r)
         band = pk // cycle
@@ -87,6 +106,12 @@ def fabric_solid(profile_r, height, *,
     def add_ring(z, r):
         if rings and abs(rings[-1][0] - z) < 1e-9 \
                 and np.allclose(rings[-1][1], r):
+            return
+        # extend a vertical run: three rings with one contour are a
+        # straight wall — slide the middle ring instead of adding one
+        if len(rings) >= 2 and np.allclose(rings[-1][1], r) \
+                and np.allclose(rings[-2][1], r):
+            rings[-1] = (z, rings[-1][1])
             return
         rings.append((z, r))
 

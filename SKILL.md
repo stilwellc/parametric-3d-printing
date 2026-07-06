@@ -1192,8 +1192,8 @@ tm = fabric_solid(
     layer_h=0.2,          # MUST equal the slicer layer height
     zigzags_around=90,    # keep half-period (pi*D/zigzags/2) under bridge limit
     zigzag_depth=2.0,     # outward swing = window size
-    zigzag_layers=3, straight_layers=2)
-tm.export("fabric_part.stl")
+    zigzag_layers=3, straight_layers=2)   # add band_quantize=True at
+tm.export("fabric_part.stl")            # fine layer heights (<=0.1mm)
 ```
 
 **Rules that must not be skipped:**
