@@ -102,6 +102,10 @@ Once installed, the skill activates in two ways inside Claude Code:
 
 ## Live Design UI
 
+<p align="center">
+  <img src="docs/live_ui.png" alt="Live design UI: 3D viewer with the zigzag fabric bowl, phase tracker, parameters, and slicer report" width="960">
+</p>
+
 A companion browser UI that shows the model taking shape in real time while Claude designs it:
 
 ```bash
