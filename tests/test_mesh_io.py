@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -34,5 +35,9 @@ def test_load_mesh_no_pyrender_import():
     """
     code = ("import sys, mesh_io; "
             "sys.exit(1 if 'pyrender' in sys.modules else 0)")
-    proc = subprocess.run([sys.executable, "-c", code], cwd=REPO_ROOT)
-    assert proc.returncode == 0, "importing mesh_io pulled in pyrender"
+    proc = subprocess.run([sys.executable, "-c", code],
+                          cwd=os.path.join(REPO_ROOT, "tools"),
+                          capture_output=True)
+    assert proc.returncode == 0, (
+        "importing mesh_io failed or pulled in pyrender: "
+        + proc.stderr.decode())

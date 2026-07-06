@@ -1,9 +1,8 @@
 """Tests for the floor through-cut helpers."""
-import numpy as np
 import pytest
 import trimesh
 
-from floor_cuts import diamond_cutters, text_cutters, text_region, cut_floor
+from textures.floor_cuts import diamond_cutters, text_cutters, text_region, cut_floor
 
 # DejaVu Sans ships with matplotlib — tests must not depend on OS fonts
 FONT = "DejaVu Sans"
@@ -52,6 +51,6 @@ def test_cut_floor_refuses_loose_islands():
     ring = Point(0, 0).buffer(12).difference(Point(0, 0).buffer(9))
     prism = trimesh.creation.extrude_polygon(ring, height=5.0)
     prism.apply_translation([0, 0, -1.0])
-    from floor_cuts import _to_manifold
+    from textures.floor_cuts import _to_manifold
     with pytest.raises(ValueError, match="loose island"):
         cut_floor(disk, [_to_manifold(prism)])

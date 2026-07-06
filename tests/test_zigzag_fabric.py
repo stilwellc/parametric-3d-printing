@@ -1,7 +1,7 @@
 """Tests for the printed-fabric wall generator."""
 import numpy as np
 
-from zigzag_fabric import fabric_solid, tri01
+from textures.zigzag_fabric import fabric_solid, tri01
 
 
 def small_fabric(**overrides):

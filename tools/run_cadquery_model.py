@@ -5,9 +5,9 @@ JSON result so Claude can parse success/failure without the user copy-pasting
 tracebacks.
 
 Usage:
-    python3 run_cadquery_model.py path/to/model.py
-    python3 run_cadquery_model.py path/to/model.py --preview            # also render
-    python3 run_cadquery_model.py path/to/model.py --preview --strict   # fail on non-watertight
+    python3 tools/run_cadquery_model.py path/to/model.py
+    python3 tools/run_cadquery_model.py path/to/model.py --preview            # also render
+    python3 tools/run_cadquery_model.py path/to/model.py --preview --strict   # fail on non-watertight
 
 3MF files produced by the script (via cq.exporters.export(result, "name.3mf"))
 are discovered automatically and reported alongside the STLs.

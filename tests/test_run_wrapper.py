@@ -5,6 +5,7 @@ import sys
 
 WRAPPER = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "tools",
     "run_cadquery_model.py",
 )
 

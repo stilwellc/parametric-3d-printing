@@ -53,7 +53,7 @@ $PSLICER --version   # confirm it's found
 A companion browser UI shows the model building in real time. Start it once per session before Phase 1:
 
 ```bash
-python3 ui_server.py   # opens http://localhost:7384 automatically
+python3 tools/ui_server.py   # opens http://localhost:7384 automatically
 ```
 
 The UI shows: live 3D model (Three.js STL viewer), multi-view preview images, phase progress, parameter table, and slicer report. It updates automatically whenever you export a new STL or PNG.
@@ -288,7 +288,7 @@ PrusaSlicer/BambuStudio default: aligned seam at the sharpest concave corner (ve
 
 Follow these steps in order. Do not skip phases or combine them unless the model is very simple (a flat bracket with two holes). Show the user progress at each phase and wait for feedback before continuing.
 
-**UI:** Start `python3 ui_server.py` now if not already running. Call `update_ui()` at every step below.
+**UI:** Start `python3 tools/ui_server.py` now if not already running. Call `update_ui()` at every step below.
 
 ### Step 1: Requirements Gathering
 
@@ -433,7 +433,7 @@ Build the basic outer form: overall dimensions, shell/walls, bottom plate. No cu
 **Steps:**
 1. Write the script with parameters and basic geometry
 2. `update_ui("phase1", "Phase 1 — Base Shape", "Building base shell...", parameters=PARAMS, ...)`
-3. Export STL and render preview: `python3 run_cadquery_model.py model.py --preview --strict`
+3. Export STL and render preview: `python3 tools/run_cadquery_model.py model.py --preview --strict`
 4. Self-review: Does the shape and size look right? Is the bottom flat for printing?
 5. `update_ui("phase1", "Phase 1 — Base Shape", "Base shape complete — waiting for feedback", parameters=PARAMS, ...)`
 6. **Show the preview to the user:** "Here's the basic shape. Does this look right before I add details?" Include key dimensions.
@@ -662,7 +662,7 @@ Run both the renderer and the geometry extractor:
 
 ```bash
 # Render a multi-view preview so you can visually inspect the shape
-python3 preview.py reference.stl reference_preview.png --views multi
+python3 tools/preview.py reference.stl reference_preview.png --views multi
 ```
 
 ```python
@@ -975,7 +975,7 @@ print(f"Fill ratio: {fill_ratio:.2f}  ({'thin-walled' if fill_ratio < 0.25 else 
 
 Then render a preview:
 ```bash
-python3 preview.py model.stl audit_preview.png --views multi
+python3 tools/preview.py model.stl audit_preview.png --views multi
 ```
 
 ### Step 2: Report Findings to the User
@@ -1111,13 +1111,13 @@ print(f"Exported: {width}x{depth}x{height}mm")
 
 **One-shot (run script + render + parse result as JSON):**
 ```bash
-python3 run_cadquery_model.py model.py --preview --strict
+python3 tools/run_cadquery_model.py model.py --preview --strict
 ```
 This executes `model.py`, finds the STL it wrote, renders the multi-view preview, and emits a JSON result with `success`, `stdout`, `stderr`, `stl`, `preview`, and `watertight`. With `--strict`, a non-watertight mesh is a hard failure. Use this as the default loop: if `success` is false, read the `stderr` field to fix the CadQuery script, then re-run.
 
 **Rendering only (when the STL already exists):**
 ```bash
-python3 preview.py model.stl preview.png --views multi
+python3 tools/preview.py model.stl preview.png --views multi
 ```
 
 ### CadQuery Patterns
@@ -1171,7 +1171,7 @@ cq.exporters.export(lid, "enclosure_lid.stl")
 
 Name files descriptively so the user knows which part is which.
 
-### Printed Fabric Walls (zigzag textile) — `zigzag_fabric.py`
+### Printed Fabric Walls (zigzag textile) — `textures/zigzag_fabric.py`
 
 **Triggers:** the user wants a bowl/vase/basket/shade that is "light and airy", "fabric-like", "knit/woven/textile look", or shows a reference print where the wall is an open diamond mesh built from alternating zigzag and straight print layers.
 
@@ -1180,7 +1180,7 @@ This is NOT a surface texture on a solid wall — the wall itself is the structu
 Do not build this in CadQuery — use the `fabric_solid()` helper, which generates the staircase mesh quantized to the print layer height:
 
 ```python
-from zigzag_fabric import fabric_solid
+from textures.zigzag_fabric import fabric_solid
 
 def profile(z):          # any silhouette: cylinder, barrel, flare...
     return 78.0 + 22.0 * math.sin(z / 60.0 * math.pi)   # scalar in/out, mm
@@ -1200,10 +1200,10 @@ tm.export("fabric_part.stl")
 - `layer_h` must exactly match the slicer layer height, or the zigzag/straight alternation smears across layers. State this in the delivery message.
 - Vase/spiral mode OFF (contours alternate per layer), 2 perimeters, 0% infill, 0 top layers, fan 100%, outer wall ≤60mm/s, no supports.
 - Keep the unsupported half-period (`pi * diameter / zigzags_around / 2`) comfortably under the material's bridge limit — ~3-4mm is safe for PLA.
-- For decorative through-cuts in the solid floor, use the `floor_cuts.py` helpers — never hand-roll them:
+- For decorative through-cuts in the solid floor, use the `textures/floor_cuts.py` helpers — never hand-roll them:
 
 ```python
-from floor_cuts import diamond_cutters, text_cutters, cut_floor
+from textures.floor_cuts import diamond_cutters, text_cutters, cut_floor
 
 cutters = diamond_cutters([(20.0, 15), (27.0, 20)], diag=5.0, depth=floor_t + 2)
 cutters += text_cutters("empty", width=27.0, bridge_w=0.8, depth=floor_t + 2)
@@ -1223,7 +1223,7 @@ tm = cut_floor(tm, cutters)   # raises if any piece would fall out of the print
 - **Hole direction**: `.hole()` cuts through the entire part by default. Use `.cboreHole()` or `.cskHole()` for counterbore/countersink.
 - **Taper direction**: In `.extrude(taper=angle)`, a **positive** taper angle narrows the shape (draft inward), **negative** flares it outward. This is opposite to what many people expect.
 - **Loft is fragile**: `.loft()` fails on many cross-section combinations. Prefer `.extrude(taper=angle)` when transitioning between a shape and a scaled version of itself. Only use `.loft()` when you need to transition between genuinely different profiles (e.g., circle to rectangle).
-- **Export errors / non-watertight STL**: If export fails or the preview reports a non-watertight mesh, the geometry is invalid (usually self-intersecting booleans or zero-thickness faces). Fix the cause, don't paper over it. Run `python3 preview.py model.stl --strict` to fail loudly on non-watertight output.
+- **Export errors / non-watertight STL**: If export fails or the preview reports a non-watertight mesh, the geometry is invalid (usually self-intersecting booleans or zero-thickness faces). Fix the cause, don't paper over it. Run `python3 tools/preview.py model.stl --strict` to fail loudly on non-watertight output.
 
 ### Export
 

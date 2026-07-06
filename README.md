@@ -69,7 +69,7 @@ Watch the build happen instead of waiting for the final STL:
 
 ```bash
 source .venv/bin/activate
-python3 ui_server.py     # http://localhost:7384
+python3 tools/ui_server.py     # http://localhost:7384
 ```
 
 A single-file Flask app that watches the skill directory and streams updates to the browser as Claude works: the latest STL in an orbitable Three.js viewer, multi-view preview renders, a phase tracker for the pipeline, the current parameter values, and the slicer report. Older exports stay listed so you can flip back to earlier iterations.
@@ -78,7 +78,7 @@ A single-file Flask app that watches the skill directory and streams updates to 
 
 ## Reusable textures
 
-**Printed fabric (zigzag textile) walls — `zigzag_fabric.py`**
+**Printed fabric (zigzag textile) walls — `textures/zigzag_fabric.py`**
 
 <p align="center">
   <img src="docs/zigzag_fabric_closeup.png" alt="Printed fabric wall macro and full bowl" width="900">
@@ -87,13 +87,13 @@ A single-file Flask app that watches the skill directory and streams updates to 
 Walls that are light, airy, and see-through: a thin shell whose contour alternates per print layer — zigzag layers swinging outward, straight layers between, alternate bands phase-shifted so they crisscross into open diamonds. The zigzag layers bridge in mid-air; the result behaves like printed textile, not a solid wall with surface relief.
 
 ```python
-from zigzag_fabric import fabric_solid
+from textures.zigzag_fabric import fabric_solid
 tm = fabric_solid(profile_fn, height=60.0, layer_h=0.2,
                   zigzags_around=90, zigzag_depth=2.0,
                   zigzag_layers=3, straight_layers=2)
 ```
 
-The geometry is staircase-quantized to print layers, so the slicer layer height must exactly match `layer_h`. Print with 2 perimeters, 0% infill, no top layers, vase mode off, full cooling. Full rules live in the "Printed Fabric Walls" section of `SKILL.md`. Pair it with the `floor_cuts.py` helpers — crisscross diamond cutout rings and stencil-bridged through-cut text, with a hard guard against loose islands that would detach on the print bed — to perforate the solid floor to match:
+The geometry is staircase-quantized to print layers, so the slicer layer height must exactly match `layer_h`. Print with 2 perimeters, 0% infill, no top layers, vase mode off, full cooling. Full rules live in the "Printed Fabric Walls" section of `SKILL.md`. Pair it with the `textures/floor_cuts.py` helpers — crisscross diamond cutout rings and stencil-bridged through-cut text, with a hard guard against loose islands that would detach on the print bed — to perforate the solid floor to match:
 
 <p align="center">
   <img src="docs/zigzag_fabric_bowl.png" alt="Zigzag fabric bowl: perforated floor with stencil text, interior, and hero view" width="900">
@@ -121,14 +121,14 @@ More on [MakerWorld](https://makerworld.com/en/@sercanto).
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | The skill itself: 4-mode workflow, design constants, all reference tables |
-| `ui_server.py` | Live design UI (Flask + Three.js) at `localhost:7384` |
-| `run_cadquery_model.py` | Runs a CadQuery script, renders preview, emits JSON for Claude's self-correct loop |
-| `preview.py` | Headless STL → multi-view PNG renderer; `--strict` fails on non-watertight meshes |
-| `zigzag_fabric.py` | Reusable printed-fabric wall generator |
-| `floor_cuts.py` | Floor through-cut helpers: diamond rings + stencil-bridged text, loose-island guard |
-| `mesh_io.py` | STL loading with validation (no pyrender dependency) |
-| `stl_to_3mf.py` | STL → 3MF converter for Bambu Studio / PrusaSlicer |
-| `design-review.md` | Visual inspection checklist and printability analysis helpers |
+| `tools/ui_server.py` | Live design UI (Flask + Three.js) at `localhost:7384` |
+| `tools/run_cadquery_model.py` | Runs a CadQuery script, renders preview, emits JSON for Claude's self-correct loop |
+| `tools/preview.py` | Headless STL → multi-view PNG renderer; `--strict` fails on non-watertight meshes |
+| `textures/zigzag_fabric.py` | Reusable printed-fabric wall generator |
+| `textures/floor_cuts.py` | Floor through-cut helpers: diamond rings + stencil-bridged text, loose-island guard |
+| `tools/mesh_io.py` | STL loading with validation (no pyrender dependency) |
+| `tools/stl_to_3mf.py` | STL → 3MF converter for Bambu Studio / PrusaSlicer |
+| `docs/design-review.md` | Visual inspection checklist and printability analysis helpers |
 | `tests/` | Pytest suite for the mesh tooling and fabric generator |
 
 ---
