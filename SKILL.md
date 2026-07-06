@@ -24,11 +24,12 @@ Read the user's request and pick one mode. Follow that mode linearly from start 
 # CadQuery requires Python 3.10-3.12 (OCC kernel lacks 3.13+ wheels)
 python3.12 -m venv .venv && source .venv/bin/activate
 
-# Install CadQuery and preview dependencies
-pip install cadquery trimesh pyrender Pillow manifold3d rtree
+# Install ALL dependencies from the pinned list — do not hand-pick
+# packages; past sessions broke because ad-hoc installs missed flask.
+pip install -r requirements.txt
 ```
 
-CadQuery uses the OpenCASCADE kernel under the hood. trimesh, pyrender, and Pillow are used for the preview-analyze-iterate loop. manifold3d and rtree are required for overhang fix and mesh repair. No display server is needed; everything renders headlessly via pyrender's offscreen backend.
+CadQuery uses the OpenCASCADE kernel under the hood. trimesh, pyrender, and Pillow drive the preview-analyze-iterate loop; manifold3d and rtree the overhang fix and mesh repair; flask the live design UI; shapely, matplotlib, and mapbox_earcut the 2D outline work (stencil text cuts, ceiling maps). No display server is needed; everything renders headlessly via pyrender's offscreen backend.
 
 **If CadQuery fails to install** (OCC kernel build errors), try:
 ```bash

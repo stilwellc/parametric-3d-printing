@@ -3,8 +3,6 @@ import os
 import subprocess
 import sys
 
-import pytest
-
 WRAPPER = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "run_cadquery_model.py",

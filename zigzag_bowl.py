@@ -16,6 +16,8 @@ Seam: Bambu scarf/random — hidden in the zigzag.
 import numpy as np
 import trimesh
 
+from zigzag_fabric import fabric_solid
+
 # ============================================================
 # PARAMETERS - Edit these to customize the model
 # All dimensions in mm.
@@ -83,8 +85,6 @@ def r_outer(z):
 # ============================================================
 # MODEL — fabric wall via the reusable zigzag_fabric module
 # ============================================================
-from zigzag_fabric import fabric_solid
-
 tm = fabric_solid(
     r_outer, height,
     shell_t=shell_t, floor_t=floor_t, solid_base_z=solid_base_z,

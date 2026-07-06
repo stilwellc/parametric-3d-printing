@@ -39,13 +39,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import queue
 import threading
 import time
 import webbrowser
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from flask import Flask, Response, jsonify, render_template_string, send_from_directory
 
