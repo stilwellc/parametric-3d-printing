@@ -6,7 +6,7 @@ from textures.zigzag_fabric import fabric_solid
 
 
 @pytest.mark.parametrize("nozzle", [0.2, 0.4, 0.6, 0.8])
-@pytest.mark.parametrize("stitch", ["zigzag", "wave"])
+@pytest.mark.parametrize("stitch", ["zigzag", "domes", "wave"])
 def test_preset_builds_watertight_fabric(nozzle, stitch):
     p = fabric_preset(nozzle, diameter=40, stitch=stitch)
     # small squat test part keeps every combination fast

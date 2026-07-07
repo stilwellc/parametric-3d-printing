@@ -1188,15 +1188,15 @@ from textures.zigzag_fabric import fabric_solid
 def profile(z):          # any silhouette: cylinder, barrel, flare...
     return 78.0 + 22.0 * math.sin(z / 60.0 * math.pi)   # scalar in/out, mm
 
-p = fabric_preset(0.4, diameter=200, stitch="zigzag")   # or "wave"; rim_loops=True for the crochet edge
+p = fabric_preset(0.4, diameter=200, stitch="zigzag")   # or "domes"/"wave"; rim_loops=True for the crochet edge
 tm = fabric_solid(profile, height=60.0, **p["fabric"])
 tm.export("fabric_part.stl")
 print(p["print"])        # settings card — quote it in the delivery message
 ```
 
-Preset scale ladder (diamond/stitch width): 0.2mm nozzle → 3.6/2.0mm lace · 0.4 → 7.0/3.5mm classic · 0.6 → 9.5/4.8mm bold · 0.8 → 12/6mm chunky basket. Override any individual value by editing `p["fabric"]` before the call — the presets are starting points, not limits.
+Preset scale ladder (zigzag diamond width): 0.2mm nozzle → 3.6mm lace · 0.4 → 7.0mm classic · 0.6 → 9.5mm bold · 0.8 → 12mm chunky basket; domes and wave scale alongside. Override any individual value by editing `p["fabric"]` before the call — the presets are starting points, not limits.
 
-**Stitch variants:** `stitch="zigzag"` (default) gives crisscross diamond fins. `stitch="wave"` gives rounded stockinette-style dome bumps in half-offset rows — use taller bands (`zigzag_layers=14-16` at 0.1mm so stitches are roughly round) and `straight_layers=0-1`. Either style can add `rim_loop_h` (mm) for a crochet cast-off loop band at the rim (`rim_loop_period` sets loop width in stitches).
+**Stitch variants:** `stitch="zigzag"` (default) gives crisscross diamond fins. `stitch="domes"` gives rounded stockinette-style dome bumps in half-offset rows — use taller bands (`zigzag_layers=14-16` at 0.1mm so stitches are roughly round) and `straight_layers=0-1`. `stitch="wave"` gives continuous sine lines mirrored every layer — strands cross at the zeros and open eye-shaped windows between crossings. Either style can add `rim_loop_h` (mm) for a crochet cast-off loop band at the rim (`rim_loop_period` sets loop width in stitches).
 
 **Rules that must not be skipped:**
 - `layer_h` must exactly match the slicer layer height, or the zigzag/straight alternation smears across layers. State this in the delivery message.

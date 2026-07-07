@@ -40,13 +40,22 @@ _ZIGZAG = {
     0.8: dict(width=12.0, depth=3.5, zigzag_layers=3, straight_layers=1),
 }
 
-# nozzle -> wave stitch geometry (stitch width mm, dome mm; band height
-# is ~0.8x the stitch width so domes come out roughly round)
-_WAVE = {
+# nozzle -> domes stitch geometry (stitch width mm, dome mm; band
+# height is ~0.8x the stitch width so domes come out roughly round)
+_DOMES = {
     0.2: dict(width=2.0, depth=1.0),
     0.4: dict(width=3.5, depth=1.6),
     0.6: dict(width=4.8, depth=2.1),
     0.8: dict(width=6.0, depth=2.6),
+}
+
+# nozzle -> wave stitch geometry (wavelength mm, peak-to-peak swing mm;
+# each print layer mirrors the sine of the one below)
+_WAVE = {
+    0.2: dict(width=3.6,  depth=1.4),
+    0.4: dict(width=6.0,  depth=2.4),
+    0.6: dict(width=8.0,  depth=3.2),
+    0.8: dict(width=10.0, depth=4.0),
 }
 
 
@@ -55,7 +64,7 @@ def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
 
     nozzle    0.2, 0.4, 0.6, or 0.8 (mm)
     diameter  the part's max diameter (mm) — sets the stitch count
-    stitch    "zigzag" or "wave"
+    stitch    "zigzag", "domes", or "wave"
     rim_loops add a crochet cast-off loop band at the rim
 
     Returns {"fabric": kwargs for fabric_solid, "print": settings card}.
@@ -63,11 +72,11 @@ def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
     if nozzle not in _MACHINE:
         raise ValueError(f"no preset for {nozzle}mm nozzle "
                          f"(have {sorted(_MACHINE)})")
-    if stitch not in ("zigzag", "wave"):
-        raise ValueError('stitch must be "zigzag" or "wave"')
+    if stitch not in ("zigzag", "domes", "wave"):
+        raise ValueError('stitch must be "zigzag", "domes", or "wave"')
 
     m = _MACHINE[nozzle]
-    g = (_ZIGZAG if stitch == "zigzag" else _WAVE)[nozzle]
+    g = {"zigzag": _ZIGZAG, "domes": _DOMES, "wave": _WAVE}[stitch][nozzle]
     stitches = max(8, round(np.pi * diameter / g["width"]))
 
     fabric = dict(
@@ -76,16 +85,23 @@ def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
         zigzags_around=stitches, zigzag_depth=g["depth"],
         stitch=stitch,
         band_quantize=(stitch == "zigzag" and m["layer_h"] <= 0.1),
-        samples_per_zigzag=4 if stitch == "zigzag" else 6,
+        samples_per_zigzag={"zigzag": 4, "domes": 6, "wave": 8}[stitch],
     )
     if stitch == "zigzag":
         fabric["zigzag_layers"] = g["zigzag_layers"]
         fabric["straight_layers"] = g["straight_layers"]
-    else:
+    elif stitch == "domes":
         fabric["zigzag_layers"] = max(4, round(0.8 * g["width"] / m["layer_h"]))
         fabric["straight_layers"] = 0
+    else:
+        # wave: hold each sine direction for a band (~1/3 wavelength
+        # tall), then mirror — per-layer flipping collapses into
+        # vertical ribs instead of flowing wave rows
+        fabric["zigzag_layers"] = max(2, round(0.32 * g["width"] / m["layer_h"]))
+        fabric["straight_layers"] = 0
     if rim_loops:
-        fabric["rim_loop_h"] = round(1.2 * g["width"], 1)
+        fabric["rim_loop_h"] = round(0.6 * g["width"], 1)
+        fabric["rim_loop_depth"] = g["depth"]
         fabric["rim_loop_period"] = 2.0
 
     half_period = np.pi * diameter / stitches / 2
@@ -98,7 +114,7 @@ def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
         bottom_layers=int(round(m["floor_t"] / m["layer_h"])),
         outer_wall_speed=f"<={m['speed']}mm/s, fan 100%",
         supports="none",
-        bridge_span=f"{half_period:.1f}mm zigzag half-period"
-                    if stitch == "zigzag" else "n/a (wave domes ramp)",
+        bridge_span=f"{half_period:.1f}mm half-period"
+                    if stitch in ("zigzag", "wave") else "n/a (domes ramp)",
     )
     return {"fabric": fabric, "print": card}

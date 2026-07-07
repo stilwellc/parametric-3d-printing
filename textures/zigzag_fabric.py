@@ -68,12 +68,17 @@ def fabric_solid(profile_r, height, *,
                    stepping, invisible inside the fabric texture.
     stitch         "zigzag" — constant-depth triangle-wave fins that
                    crisscross into open diamonds (the original fabric).
-                   "wave" — smooth raised-cosine bumps with a bell
+                   "domes" — smooth raised-cosine bumps with a bell
                    amplitude envelope across each band: rounded stitch
                    domes in half-offset rows, like stockinette knit.
-                   Wave wants taller bands (band height ~ stitch width,
+                   Domes want taller bands (band height ~ stitch width,
                    e.g. zigzag_layers=14 at 0.1mm for 1.6mm stitches)
                    and straight_layers 0-1 so rows sit snugly.
+                   "wave" — continuous sine lines, mirrored every band
+                   (zigzag_layers=1 reverses each print layer): strands
+                   cross at the wave zeros and open eye-shaped windows
+                   between crossings. zigzag_depth is the peak-to-peak
+                   swing.
     rim_loop_h     height (mm) of a loop-edge band at the very top: one
                    continuous deep zigzag, like a crochet cast-off row.
                    0 disables.
@@ -127,7 +132,7 @@ def fabric_solid(profile_r, height, *,
         # so adjacent bands (straight_layers=0) never share a vertex.
         # Invisible to the slicer.
         standoff = 0.02 * (1 + band % 2)
-        if stitch == "wave":
+        if stitch == "domes":
             # bell envelope across the band's layers x smooth theta bump
             # -> rounded stitch domes instead of constant-depth fins.
             # The 1um-per-layer term keeps the bump zeros of adjacent
@@ -137,6 +142,12 @@ def fabric_solid(profile_r, height, *,
             bump = np.sin(np.pi * np.mod(u, 1.0)) ** 2
             return (base_r + standoff + 0.001 * (pk % cycle)
                     + zigzag_depth * env * bump)
+        if stitch == "wave":
+            # continuous sine line mirrored every band: the half-period
+            # phase shift on odd bands negates the sine, so strands
+            # cross at the zeros and open eye windows between crossings
+            return (base_r + standoff
+                    + 0.5 * zigzag_depth * np.sin(2 * np.pi * u))
         return base_r + standoff + zigzag_depth * tri01(u)
 
     # staircase rings: outer up, rim, inner down, floor. Coincident

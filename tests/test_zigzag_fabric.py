@@ -54,17 +54,30 @@ def test_band_quantize_shrinks_mesh_and_stays_watertight():
     assert np.allclose(lean.extents, dense.extents, atol=0.2)
 
 
-def test_wave_stitch_with_rim_loops_watertight():
+def test_domes_stitch_with_rim_loops_watertight():
     tm = fabric_solid(
         lambda z: 25.0, 20.0,
         shell_t=0.5, floor_t=1.6, solid_base_z=2.0, layer_h=0.2,
         zigzags_around=39, zigzag_depth=1.0,
         zigzag_layers=8, straight_layers=0, samples_per_zigzag=6,
-        stitch="wave", rim_loop_h=2.0)
+        stitch="domes", rim_loop_h=2.0)
     assert tm.is_watertight
     assert len(tm.split(only_watertight=False)) == 1
-    # wave bumps + rim loops both push outward past the profile
+    # dome bumps + rim loops both push outward past the profile
     assert tm.extents[0] > 50.0 + 1.0
+
+
+def test_wave_stitch_mirrored_sines_watertight():
+    tm = fabric_solid(
+        lambda z: 25.0, 20.0,
+        shell_t=0.5, floor_t=1.6, solid_base_z=2.0, layer_h=0.2,
+        zigzags_around=26, zigzag_depth=1.5,
+        zigzag_layers=1, straight_layers=0, samples_per_zigzag=8,
+        stitch="wave")
+    assert tm.is_watertight
+    assert len(tm.split(only_watertight=False)) == 1
+    # sine swings +/- depth/2 around the profile
+    assert tm.extents[0] > 51.0
 
 
 def test_solid_base_band_stays_smooth():
