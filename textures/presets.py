@@ -94,10 +94,11 @@ def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
         fabric["zigzag_layers"] = max(4, round(0.8 * g["width"] / m["layer_h"]))
         fabric["straight_layers"] = 0
     else:
-        # wave: hold each sine direction for a band (~1/3 wavelength
-        # tall), then mirror — per-layer flipping collapses into
-        # vertical ribs instead of flowing wave rows
-        fabric["zigzag_layers"] = max(2, round(0.32 * g["width"] / m["layer_h"]))
+        # wave: hold each sine direction for a short band (~0.15x the
+        # wavelength, ~4 layers), then mirror. Per-layer flipping
+        # collapses into vertical ribs; tall bands read as stacked
+        # slabs — the strand look lives in between
+        fabric["zigzag_layers"] = max(2, round(0.15 * g["width"] / m["layer_h"]))
         fabric["straight_layers"] = 0
     if rim_loops:
         fabric["rim_loop_h"] = round(0.6 * g["width"], 1)
