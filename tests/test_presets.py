@@ -5,7 +5,7 @@ from textures.presets import fabric_preset
 from textures.zigzag_fabric import fabric_solid
 
 
-@pytest.mark.parametrize("nozzle", [0.1, 0.2, 0.4, 0.8])
+@pytest.mark.parametrize("nozzle", [0.2, 0.4, 0.6, 0.8])
 @pytest.mark.parametrize("stitch", ["zigzag", "wave"])
 def test_preset_builds_watertight_fabric(nozzle, stitch):
     p = fabric_preset(nozzle, diameter=40, stitch=stitch)
@@ -32,7 +32,7 @@ def test_preset_matches_known_bowls():
 
 def test_preset_rejects_unknown_nozzle():
     with pytest.raises(ValueError, match="no preset"):
-        fabric_preset(0.6, diameter=100)
+        fabric_preset(0.1, diameter=100)
 
 
 def test_print_card_bottom_layers_cover_floor():

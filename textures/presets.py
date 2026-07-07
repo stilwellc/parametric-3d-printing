@@ -1,8 +1,9 @@
 """presets.py — nozzle-matched settings for the fabric textures.
 
-One call maps a nozzle size to everything that must scale together:
-layer height (the geometry is quantized to it), line width, shell
-thickness, band rhythm, stitch size, and the print-settings card.
+One call maps a nozzle size (0.2 / 0.4 / 0.6 / 0.8mm — the Bambu
+lineup) to everything that must scale together: layer height (the
+geometry is quantized to it), line width, shell thickness, band
+rhythm, stitch size, and the print-settings card.
 
     from textures.presets import fabric_preset
     from textures.zigzag_fabric import fabric_solid
@@ -13,38 +14,38 @@ thickness, band rhythm, stitch size, and the print-settings card.
 
 Values are tuned, not formulaic — the 0.4 zigzag preset reproduces the
 original 200mm bowl fabric; the 0.2 presets reproduce the lace/wave
-test cups. The 0.8 presets give a chunky basket weave; 0.1 is
-jewelry-fine (aftermarket nozzle, patient printing).
+test cups. The 0.6 presets sit between classic and chunky; 0.8 is a
+full basket weave.
 """
 import numpy as np
 
 # nozzle -> shared machine numbers
 _MACHINE = {
     #        layer_h line_w shell  floor  base_z outer-wall speed
-    0.1: dict(layer_h=0.05, line_w=0.12, shell_t=0.25, floor_t=1.6,
-              solid_base_z=3.0, speed=20),
     0.2: dict(layer_h=0.10, line_w=0.25, shell_t=0.50, floor_t=2.4,
               solid_base_z=4.0, speed=40),
     0.4: dict(layer_h=0.20, line_w=0.50, shell_t=1.00, floor_t=3.0,
               solid_base_z=6.0, speed=60),
+    0.6: dict(layer_h=0.30, line_w=0.75, shell_t=1.50, floor_t=3.6,
+              solid_base_z=7.0, speed=45),
     0.8: dict(layer_h=0.40, line_w=1.00, shell_t=2.00, floor_t=4.0,
               solid_base_z=8.0, speed=35),
 }
 
 # nozzle -> zigzag stitch geometry (diamond width mm, swing mm, bands)
 _ZIGZAG = {
-    0.1: dict(width=2.4,  depth=0.8, zigzag_layers=6, straight_layers=3),
     0.2: dict(width=3.6,  depth=1.2, zigzag_layers=4, straight_layers=2),
     0.4: dict(width=7.0,  depth=2.0, zigzag_layers=3, straight_layers=2),
+    0.6: dict(width=9.5,  depth=2.8, zigzag_layers=3, straight_layers=1),
     0.8: dict(width=12.0, depth=3.5, zigzag_layers=3, straight_layers=1),
 }
 
 # nozzle -> wave stitch geometry (stitch width mm, dome mm; band height
 # is ~0.8x the stitch width so domes come out roughly round)
 _WAVE = {
-    0.1: dict(width=1.2, depth=0.6),
     0.2: dict(width=2.0, depth=1.0),
     0.4: dict(width=3.5, depth=1.6),
+    0.6: dict(width=4.8, depth=2.1),
     0.8: dict(width=6.0, depth=2.6),
 }
 
@@ -52,7 +53,7 @@ _WAVE = {
 def fabric_preset(nozzle, *, diameter, stitch="zigzag", rim_loops=False):
     """Nozzle-matched kwargs for fabric_solid + a print-settings card.
 
-    nozzle    0.1, 0.2, 0.4, or 0.8 (mm)
+    nozzle    0.2, 0.4, 0.6, or 0.8 (mm)
     diameter  the part's max diameter (mm) — sets the stitch count
     stitch    "zigzag" or "wave"
     rim_loops add a crochet cast-off loop band at the rim

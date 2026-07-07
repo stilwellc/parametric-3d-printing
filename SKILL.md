@@ -1179,7 +1179,7 @@ This is NOT a surface texture on a solid wall — the wall itself is the structu
 
 Do not build this in CadQuery — use the `fabric_solid()` helper, which generates the staircase mesh quantized to the print layer height:
 
-Start from the nozzle presets — they map 0.1 / 0.2 / 0.4 / 0.8mm nozzles to matched layer height, line width, shell, band rhythm, and stitch size, plus the print-settings card for delivery:
+Start from the nozzle presets — they map 0.2 / 0.4 / 0.6 / 0.8mm nozzles to matched layer height, line width, shell, band rhythm, and stitch size, plus the print-settings card for delivery:
 
 ```python
 from textures.presets import fabric_preset
@@ -1194,7 +1194,7 @@ tm.export("fabric_part.stl")
 print(p["print"])        # settings card — quote it in the delivery message
 ```
 
-Preset scale ladder (diamond/stitch width): 0.1mm nozzle → 2.4/1.2mm jewelry-fine · 0.2 → 3.6/2.0mm lace · 0.4 → 7.0/3.5mm classic · 0.8 → 12/6mm chunky basket. Override any individual value by editing `p["fabric"]` before the call — the presets are starting points, not limits.
+Preset scale ladder (diamond/stitch width): 0.2mm nozzle → 3.6/2.0mm lace · 0.4 → 7.0/3.5mm classic · 0.6 → 9.5/4.8mm bold · 0.8 → 12/6mm chunky basket. Override any individual value by editing `p["fabric"]` before the call — the presets are starting points, not limits.
 
 **Stitch variants:** `stitch="zigzag"` (default) gives crisscross diamond fins. `stitch="wave"` gives rounded stockinette-style dome bumps in half-offset rows — use taller bands (`zigzag_layers=14-16` at 0.1mm so stitches are roughly round) and `straight_layers=0-1`. Either style can add `rim_loop_h` (mm) for a crochet cast-off loop band at the rim (`rim_loop_period` sets loop width in stitches).
 
