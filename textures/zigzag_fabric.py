@@ -68,10 +68,10 @@ def fabric_solid(profile_r, height, *,
                    stepping, invisible inside the fabric texture.
     stitch         "zigzag" — constant-depth triangle-wave fins that
                    crisscross into open diamonds (the original fabric).
-                   "knit" — smooth raised-cosine bumps with a bell
+                   "wave" — smooth raised-cosine bumps with a bell
                    amplitude envelope across each band: rounded stitch
                    domes in half-offset rows, like stockinette knit.
-                   Knit wants taller bands (band height ~ stitch width,
+                   Wave wants taller bands (band height ~ stitch width,
                    e.g. zigzag_layers=14 at 0.1mm for 1.6mm stitches)
                    and straight_layers 0-1 so rows sit snugly.
     rim_loop_h     height (mm) of a loop-edge band at the very top: one
@@ -127,7 +127,7 @@ def fabric_solid(profile_r, height, *,
         # so adjacent bands (straight_layers=0) never share a vertex.
         # Invisible to the slicer.
         standoff = 0.02 * (1 + band % 2)
-        if stitch == "knit":
+        if stitch == "wave":
             # bell envelope across the band's layers x smooth theta bump
             # -> rounded stitch domes instead of constant-depth fins.
             # The 1um-per-layer term keeps the bump zeros of adjacent

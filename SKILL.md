@@ -1196,7 +1196,7 @@ tm = fabric_solid(
 tm.export("fabric_part.stl")            # fine layer heights (<=0.1mm)
 ```
 
-**Stitch variants:** `stitch="zigzag"` (default) gives crisscross diamond fins. `stitch="knit"` gives rounded stockinette-style dome bumps in half-offset rows — use taller bands (`zigzag_layers=14-16` at 0.1mm so stitches are roughly round) and `straight_layers=0-1`. Either style can add `rim_loop_h` (mm) for a crochet cast-off loop band at the rim (`rim_loop_period` sets loop width in stitches).
+**Stitch variants:** `stitch="zigzag"` (default) gives crisscross diamond fins. `stitch="wave"` gives rounded stockinette-style dome bumps in half-offset rows — use taller bands (`zigzag_layers=14-16` at 0.1mm so stitches are roughly round) and `straight_layers=0-1`. Either style can add `rim_loop_h` (mm) for a crochet cast-off loop band at the rim (`rim_loop_period` sets loop width in stitches).
 
 **Rules that must not be skipped:**
 - `layer_h` must exactly match the slicer layer height, or the zigzag/straight alternation smears across layers. State this in the delivery message.
