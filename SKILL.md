@@ -53,7 +53,8 @@ $PSLICER --version   # confirm it's found
 A companion browser UI (text2print) shows the model building in real time and collects the user's verification decisions. **Launch it yourself, in the background, at the start of every design session — do not wait to be asked:**
 
 ```bash
-curl -s -o /dev/null localhost:7384 || nohup .venv/bin/python tools/ui_server.py &
+curl -s -o /dev/null localhost:7384 || \
+  (nohup .venv/bin/python tools/ui_server.py > /tmp/text2print_ui.log 2>&1 &)
 # serves + auto-opens http://localhost:7384
 # if tools/ui_server.py changed since the server started, kill and relaunch:
 #   lsof -ti :7384 | xargs kill
@@ -109,8 +110,15 @@ At each gate:
 
 1. `rm -f ui_approval.json` — clear any stale answer
 2. Write `ui_state.json` with `awaiting={"gate": "<gate-id>", "question": "<one-line question>"}` — the UI shows an Approve / Request-changes banner
-3. Ask the same question in chat, then **end your turn and wait**
-4. On the next turn, **check `ui_approval.json` first** (the user may have clicked instead of typing):
+3. **Start a gate watcher as a background task** so a UI click wakes you without a chat message (bounded at ~30 min so an abandoned gate doesn't leave a zombie):
+
+```bash
+for i in $(seq 1 900); do [ -f ui_approval.json ] && break; sleep 2; done; \
+  cat ui_approval.json 2>/dev/null || echo "gate watcher timed out"
+```
+
+4. Ask the same question in chat, then **end your turn and wait** — the watcher's completion or the user's chat reply will wake you
+5. When you wake, **check `ui_approval.json` first** (the user may have clicked instead of typing):
    - `"decision": "approve"` → delete the file, clear `awaiting` from the state, proceed
    - `"decision": "changes"` → treat the `note` as feedback, iterate, then re-gate
    - a chat reply overrides the file if both exist; always delete the file after consuming it
