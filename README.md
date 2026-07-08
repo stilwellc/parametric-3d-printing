@@ -1,38 +1,119 @@
-# text2print
+<h1 align="center">text2print</h1>
 
-Describe a thing; get a print-ready STL. A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill: Claude researches real-world dimensions, builds the part parametrically in [CadQuery](https://cadquery.readthedocs.io/) (or procedural mesh code when the geometry demands it), verifies it structurally, slices it headlessly, and delivers a print-ready STL with settings — while you watch it take shape live in your browser and approve each phase before it proceeds.
+<p align="center"><em>Describe a thing. Get a print-ready STL.</em></p>
 
 <p align="center">
-  <img src="docs/live_ui.png" alt="Live design UI: Three.js viewer, phase tracker, parameters, and slicer report" width="900">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-8a7248" alt="License"></a>
+  <img src="https://img.shields.io/badge/python-3.10–3.12-e8a33d" alt="Python 3.10–3.12">
+  <img src="https://img.shields.io/badge/Claude%20Code-skill-d9a05b" alt="Claude Code skill">
 </p>
+
+<p align="center">
+  <img src="docs/live_ui.png" alt="The text2print live studio: model on a print plate, phase pipeline, and an approval gate awaiting your decision" width="920">
+</p>
+
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill that turns a sentence into a manufacturable object. Claude researches real-world dimensions, builds the part parametrically in [CadQuery](https://cadquery.readthedocs.io/) — or procedural mesh code when the geometry demands it — verifies it structurally, slices it headlessly, and delivers an STL with exact print settings. You watch the whole thing take shape in a live browser studio, and nothing moves past a design checkpoint until you approve it.
 
 ---
 
-## The pipeline
+## How it works
 
-The skill picks one of four modes from what you ask:
+text2print picks one of four modes from what you ask:
 
-| Mode | Trigger | What happens |
-|------|---------|--------------|
+| Mode | You say… | What happens |
+|------|----------|--------------|
 | **New Design** | "Design me a…" | Requirements → repo search → design brief → phased build → structural check → slicer verification → delivery |
-| **STL Reference** | Provide an existing STL | Analyzes the mesh, recovers dimensions, then modifies it or uses it as inspiration |
-| **Overhang Fix** | "This keeps failing at the overhang" | Ray-cast ceiling map + manifold3d boolean fill — overhangs removed without slicer supports |
+| **STL Reference** | *attach an STL* | Analyzes the mesh, recovers dimensions, then modifies it or designs from its DNA |
+| **Overhang Fix** | "It keeps failing at the overhang" | Ray-cast ceiling map + manifold boolean fill — overhangs removed without slicer supports |
 | **Printability Audit** | "Will this print?" | Watertight check, overhang detection, wall analysis, auto-repair, orientation recommendation |
 
 Nothing is guessed along the way:
 
-- **Reference tables built in** — material profiles (PLA/PETG/ABS/ASA/TPU/PA-CF), clearance and press fits, snap-fit arm geometry, living hinges, heat-insert and screw dimensions, SBC mounting patterns, magnet pockets
-- **Repo search first** — checks MakerWorld, Printables, Thingiverse, Cults3D, and MyMiniFactory before designing from scratch
+- **Reference tables built in** — material profiles (PLA / PETG / ABS / ASA / TPU / PA-CF), clearance and press fits, snap-fit arm geometry, living hinges, heat-insert and screw dimensions, SBC mounting patterns, magnet pockets
+- **Repo search first** — MakerWorld, Printables, Thingiverse, Cults3D, and MyMiniFactory are checked before designing from scratch
 - **Structural pass before delivery** — fill ratio, steep overhangs, wall thickness, and cantilever rules per material
-- **Slicer verification** — slices with PrusaSlicer CLI and reports time, filament, and support volume; more than 25% support means redesign, not delivery
+- **Slicer verification** — headless PrusaSlicer reports time, filament, and support volume; more than 25% support means redesign, not delivery
 
-Every delivery ends with print settings, orientation and reasoning, a slicer report, and a parameter table with an offer to tweak:
+Every delivery ends with settings you can drop straight into your slicer:
 
 ```
-Print settings: PETG, 0.2mm layer, 3 walls, 20% gyroid infill, no supports.
-Orientation: flat base on bed (open top faces up).
-Slicer report: ~3h 40m · 31g · no supports · 184 layers.
+Print settings: PLA, 0.4mm layer, 2 walls, 0% infill, vase mode off, no supports.
+Orientation: flat base on bed. Outer wall ≤30mm/s, fan 100%.
+Slicer report: ~2h 20m · 165g · no supports · 150 layers.
 ```
+
+---
+
+## You approve every phase
+
+The differentiator: **four verification gates**. At the design brief, the base shape, the features pass, and the final review, Claude stops, raises an **Approve / Request changes** banner in the live studio, and waits. Type a note like *"make it feel more textured for the fat lines"* and the design iterates before a single layer is wasted. A background watcher delivers your click the moment you make it — no typing required.
+
+| Gate | You're approving |
+|------|------------------|
+| `design-brief` | The plan, before any geometry exists |
+| `phase-1-base` | Proportions of the raw body |
+| `phase-2-features` | Textures, cutouts, mounts — the design itself |
+| `final-review` | Structural + slicer results, before the STL ships |
+
+---
+
+## The live studio
+
+```bash
+source .venv/bin/activate
+python3 tools/ui_server.py     # serves + auto-opens http://localhost:7384
+```
+
+A single-file Flask + Three.js app that watches the working directory and streams every change to the browser:
+
+- **The model, live** — each exported STL appears on a 256mm print plate under studio lighting, with real dimensions and triangle count; orbit, auto-rotate, wireframe
+- **Approval banner** — the verification gates, answerable in one click, with a note box for change requests
+- **Pipeline rail** — the ten design phases with live progress
+- **Renders gallery** — every preview image, in a lightbox
+- **Parameters, slicer report, activity log** — the numbers behind the shape
+- **File history** — every STL iteration with size and age; click any to reload it, or download directly
+
+---
+
+## The texture library
+
+Reusable, tested fabric generators live in `textures/` — this is where text2print goes beyond boxes and brackets.
+
+**Printed fabric walls** (`textures/zigzag_fabric.py`) — walls that are light, airy, and open: a thin shell whose contour changes *per print layer*, quantized exactly to layer height, so the slicer itself weaves the pattern. Three stitches ship, plus an escape hatch:
+
+- `zigzag` — crisscross triangle fins, open diamond windows
+- `domes` — stockinette-style rounded stitch bumps in offset rows
+- `wave` — mirrored sine strands that cross into eye-shaped windows
+- …or pass a **callable** and compose your own — two-scale gradients, morphs, panel mixes
+
+```python
+from textures.presets import fabric_preset
+from textures.zigzag_fabric import fabric_solid
+
+p = fabric_preset(0.4, diameter=200, stitch="wave", rim_loops=True)
+tm = fabric_solid(profile_fn, height=60.0, **p["fabric"])
+print(p["print"])   # the exact slicer settings card
+```
+
+**Nozzle presets** (`textures/presets.py`) — every number that must scale together, in one call:
+
+| Nozzle | Layer | Zigzag diamonds | Wave length | Character |
+|--------|-------|-----------------|-------------|-----------|
+| 0.2mm | 0.1mm | 3.6mm | 3.6mm | Lace |
+| 0.4mm | 0.2mm | 7.0mm | 6.0mm | Classic |
+| 0.6mm | 0.3mm | 9.5mm | 8.0mm | Bold |
+| 0.8mm | 0.4mm | 12mm | 10mm | Chunky basket |
+
+**Floor cutouts** (`textures/floor_cuts.py`) — perforate the solid floor to match the walls: crisscross **diamond** rings, **eye-lens** rings (the wave-window shape), and stencil-bridged **through-cut text** — with a hard guard that refuses any cut leaving a loose island to fall off the print bed.
+
+<p align="center">
+  <img src="docs/tide_lens_floor.png" alt="Lens-perforated floor — eye-shaped cutouts in concentric crisscross rings" width="460">
+  <img src="docs/zigzag_fabric_closeup.png" alt="Printed zigzag fabric wall, macro" width="460">
+</p>
+
+<p align="center">
+  <img src="docs/tide_bowl_elevation.png" alt="Tide bowl: fine ripple below a separator ring, deep waves above" width="920">
+</p>
 
 ---
 
@@ -48,67 +129,32 @@ python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Optional, for slicer verification: install [PrusaSlicer](https://www.prusa3d.com/page/prusaslicer_424/) (on macOS the CLI lives at `/Applications/PrusaSlicer.app/Contents/MacOS/prusa-slicer`). Without it the skill skips verification and says so in the delivery.
+Optional: install [PrusaSlicer](https://www.prusa3d.com/page/prusaslicer_424/) for slicer verification (macOS CLI: `/Applications/PrusaSlicer.app/Contents/MacOS/prusa-slicer`). Without it the skill says so and skips that check.
 
 Then just ask, in Claude Code:
 
 ```
 "Design a parametric enclosure for an Arduino Uno with a snap-fit lid, PETG, Bambu X1C"
-"Here's my STL — make the top 10mm taller and add a cable slot on the left side"
-"This overhang keeps failing at 15mm height even with supports"
-"Will this print? [attaches STL]"
+"Make me a catch-all bowl with the wave pattern, 0.8mm nozzle, full size"
+"Here's my STL — make the top 10mm taller and add a cable slot"
+"Will this print?"
 ```
 
-The skill auto-triggers on requests like these, or invoke it directly with `/parametric-3d-printing`.
+The skill auto-triggers on requests like these, or invoke it with `/parametric-3d-printing`.
 
 ---
 
-## Live design UI
-
-Watch the build happen instead of waiting for the final STL — and approve each design phase right in the browser:
-
-```bash
-source .venv/bin/activate
-python3 tools/ui_server.py     # http://localhost:7384
-```
-
-A single-file Flask app that watches the skill directory and streams updates to the browser as Claude works: the latest STL on a print plate in an orbitable Three.js viewer (auto-rotate, wireframe, live dimensions), a render gallery, the phase pipeline, parameters, and the slicer report. At each verification gate — design brief, base shape, features, final review — the UI raises an **Approve / Request changes** banner; your decision is written to `ui_approval.json`, which Claude reads before proceeding. Older exports stay listed so you can flip back to earlier iterations.
-
----
-
-## Reusable textures
-
-**Printed fabric (zigzag textile) walls — `textures/zigzag_fabric.py`**
+## More builds
 
 <p align="center">
-  <img src="docs/zigzag_fabric_closeup.png" alt="Printed fabric wall macro and full bowl" width="900">
+  <img src="docs/zigzag_fabric_bowl.png" alt="Zigzag fabric bowl with perforated floor and stencil text" width="920">
 </p>
-
-Walls that are light, airy, and see-through: a thin shell whose contour alternates per print layer — zigzag layers swinging outward, straight layers between, alternate bands phase-shifted so they crisscross into open diamonds. The zigzag layers bridge in mid-air; the result behaves like printed textile, not a solid wall with surface relief.
-
-```python
-from textures.zigzag_fabric import fabric_solid
-tm = fabric_solid(profile_fn, height=60.0, layer_h=0.2,
-                  zigzags_around=90, zigzag_depth=2.0,
-                  zigzag_layers=3, straight_layers=2)
-```
-
-The geometry is staircase-quantized to print layers, so the slicer layer height must exactly match `layer_h`. Print with 2 perimeters, 0% infill, no top layers, vase mode off, full cooling. Full rules live in the "Printed Fabric Walls" section of `SKILL.md`. Pair it with the `textures/floor_cuts.py` helpers — crisscross diamond cutout rings and stencil-bridged through-cut text, with a hard guard against loose islands that would detach on the print bed — to perforate the solid floor to match:
-
-<p align="center">
-  <img src="docs/zigzag_fabric_bowl.png" alt="Zigzag fabric bowl: perforated floor with stencil text, interior, and hero view" width="900">
-</p>
-
----
-
-## Gallery
-
 <p align="center">
   <img src="docs/magsafe_stand_preview.png" alt="MagSafe stand, 4 views" width="440">
   <img src="docs/iphone13_pro_case_preview.png" alt="iPhone 13 Pro case, 4 views" width="440">
 </p>
 <p align="center">
-  <img src="docs/gridfinity_d110_bin_preview.png" alt="Gridfinity 3x2 bin for Orico D110 label printer" width="440">
+  <img src="docs/gridfinity_d110_bin_preview.png" alt="Gridfinity 3x2 bin" width="440">
   <img src="docs/magnet_catch_preview.png" alt="Magnetic door catch" width="440">
 </p>
 
@@ -116,20 +162,20 @@ More on [MakerWorld](https://makerworld.com/en/@sercanto).
 
 ---
 
-## Repository layout
+## Under the hood
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `SKILL.md` | The skill itself: 4-mode workflow, design constants, all reference tables |
-| `tools/ui_server.py` | Live design UI (Flask + Three.js) at `localhost:7384` |
-| `tools/run_cadquery_model.py` | Runs a CadQuery script, renders preview, emits JSON for Claude's self-correct loop |
+| `SKILL.md` | The skill itself: 4-mode workflow, verification gates, design constants, reference tables |
+| `tools/ui_server.py` | The live studio (Flask + Three.js), including the approval-gate API |
+| `tools/run_cadquery_model.py` | Runs a CadQuery script, renders previews, emits JSON for the self-correct loop |
 | `tools/preview.py` | Headless STL → multi-view PNG renderer; `--strict` fails on non-watertight meshes |
-| `textures/zigzag_fabric.py` | Reusable printed-fabric wall generator |
-| `textures/floor_cuts.py` | Floor through-cut helpers: diamond rings + stencil-bridged text, loose-island guard |
-| `tools/mesh_io.py` | STL loading with validation (no pyrender dependency) |
-| `tools/stl_to_3mf.py` | STL → 3MF converter for Bambu Studio / PrusaSlicer |
-| `docs/design-review.md` | Visual inspection checklist and printability analysis helpers |
-| `tests/` | Pytest suite for the mesh tooling and fabric generator |
+| `tools/stl_to_3mf.py` · `tools/mesh_io.py` | 3MF conversion · validated STL loading (pyrender-free) |
+| `textures/` | Fabric generators, nozzle presets, floor cutouts — all tested |
+| `tests/` | 40-test pytest suite: watertightness, genus accounting, island guards, preset matrix |
+| `docs/` | Renders and the design-review checklist |
+
+Everything geometric ships watertight and single-body, or it doesn't ship: the generators verify `is_watertight`, floor cuts refuse loose islands, and the test suite locks known-good bowls to their exact preset numbers.
 
 ---
 
