@@ -144,24 +144,6 @@ The skill auto-triggers on requests like these, or invoke it with `/parametric-3
 
 ---
 
-## More builds
-
-<p align="center">
-  <img src="docs/zigzag_fabric_bowl.png" alt="Zigzag fabric bowl with perforated floor and stencil text" width="920">
-</p>
-<p align="center">
-  <img src="docs/magsafe_stand_preview.png" alt="MagSafe stand, 4 views" width="440">
-  <img src="docs/iphone13_pro_case_preview.png" alt="iPhone 13 Pro case, 4 views" width="440">
-</p>
-<p align="center">
-  <img src="docs/gridfinity_d110_bin_preview.png" alt="Gridfinity 3x2 bin" width="440">
-  <img src="docs/magnet_catch_preview.png" alt="Magnetic door catch" width="440">
-</p>
-
-More on [MakerWorld](https://makerworld.com/en/@sercanto).
-
----
-
 ## Under the hood
 
 | Path | Purpose |
